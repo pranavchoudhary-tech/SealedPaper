@@ -26,7 +26,7 @@ for (let i = 0; i < 128; i++) dummyDescriptor.writeFloatLE(0.05, i * 4);
 const dummyTotpEnc = Buffer.from('mock_seed_totp_secret_bytes_12345');
 
 const DEMO_USERS = [
-  { id: '10000000-0000-0000-0000-000000000001', name: 'Exam Controller', email: 'admin@test.dev', role: 'admin' },
+  { id: '10000000-0000-0000-0000-000000000001', name: 'Exam Controller', email: 'controller@test.dev', role: 'admin' },
   { id: '10000000-0000-0000-0000-000000000002', name: 'Setter A', email: 'setter_a@test.dev', role: 'setter' },
   { id: '10000000-0000-0000-0000-000000000003', name: 'Setter B', email: 'setter_b@test.dev', role: 'setter' },
   { id: '10000000-0000-0000-0000-000000000004', name: 'Custodian One', email: 'custodian1@test.dev', role: 'custodian' },
