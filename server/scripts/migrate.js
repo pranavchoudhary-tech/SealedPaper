@@ -4,19 +4,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
+import { pgOptions, SEARCH_PATH_SQL } from '../src/pgOptions.js';
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'migrations');
-const url = process.env.DATABASE_URL;
-if (!url) {
+if (!process.env.DATABASE_URL) {
   console.error('Set DATABASE_URL first (see .env.example)');
   process.exit(1);
 }
 
-const client = new pg.Client({
-  connectionString: url,
-  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
-});
-await client.connect();
+const client = new pg.Client(pgOptions());
+try {
+  await client.connect();
+} catch (err) {
+  console.error(`Could not connect to the database: ${err.message}`);
+  console.error('Check DATABASE_URL. On Supabase use the "Session pooler" string (port 5432), not "Direct connection".');
+  process.exit(1);
+}
+await client.query(SEARCH_PATH_SQL);
 await client.query(`CREATE TABLE IF NOT EXISTS schema_migrations (
   file text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`);
 
