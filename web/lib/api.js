@@ -8,6 +8,8 @@ export class ApiError extends Error {
   }
 }
 
+export const SERVER_WAKING = 'The server is starting up. Wait about a minute, then try again.';
+
 let refreshing = null;
 
 async function refreshSession() {
@@ -26,12 +28,21 @@ export async function api(path, { method = 'GET', body, form, retry = true } = {
     init.headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(body);
   }
-  const res = await fetch(`/api${path}`, init);
+  let res;
+  try {
+    res = await fetch(`/api${path}`, init);
+  } catch {
+    throw new ApiError(0, 'Cannot reach SealedPaper. Check your internet connection and try again.');
+  }
   if (res.status === 401 && retry && !path.startsWith('/auth/')) {
     if (await refreshSession()) return api(path, { method, body, form, retry: false });
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new ApiError(res.status, data.error || `Request failed (${res.status})`);
+  if (!res.ok) {
+    // A 5xx without our JSON error body comes from the proxy: the API is starting up or down.
+    if (res.status >= 500 && !data.error) throw new ApiError(res.status, SERVER_WAKING);
+    throw new ApiError(res.status, data.error || `Request failed (${res.status})`);
+  }
   return data;
 }
 
