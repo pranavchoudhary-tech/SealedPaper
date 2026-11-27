@@ -153,16 +153,20 @@ Tests use the `sealedpaper_test` database and `FACE_MODE=mock` (a frame is the s
 
 ## Deploy (free tiers)
 
+**Step-by-step guide: [`docs/DEPLOY.md`](docs/DEPLOY.md)** (about 30 minutes, no credit card).
+
 | Part | Service | Settings |
 | --- | --- | --- |
-| Database | **Neon** (or Supabase) | Create a project, copy the connection string |
-| API + worker | **Render** web service | Root `server`, build `npm ci && npm run migrate`, start `npm start`. `render.yaml` sets this up as a Blueprint. |
-| Website | **Vercel** | Root directory `web`. Environment variable `API_URL=https://<your-render-app>.onrender.com` (needed at build time). |
+| Database | **Supabase** (PostgreSQL 15+) | New project → Connect → copy the **Session pooler** string (port 5432) |
+| API + worker | **Render** web service | New → Blueprint → this repo. `render.yaml` builds `server`, runs the migrations and starts the API. Fill in `DATABASE_URL`, `MASTER_KEY`, `JWT_SECRET`. |
+| Website | **Vercel** | Root directory `web`, environment variable `API_URL=https://<your-render-app>.onrender.com` (read at build time) |
 
-Render environment variables: `NODE_ENV=production`, `DATABASE_URL`, `DATABASE_SSL=true`, `MASTER_KEY`, `JWT_SECRET` (from `npm run keygen`), `FACE_MODE=real`, `TRUST_PROXY=2`.
+Then check the live site: `cd server && npm run check:deploy -- https://<your-site>.vercel.app`.
+
 Secrets live only in these dashboards, never in git. The browser talks only to Vercel, which proxies `/api/*` to Render, so login cookies stay first-party.
+Migration `007` locks Supabase's public `anon`/`authenticated` roles out of every table, turns on row-level security and pins each function's `search_path`, so the database is safe even though Supabase exposes a public API key.
 
-> Render's free plan sleeps after 15 idle minutes. Open the site a minute before your demo so the API wakes up and loads the face models.
+> Render's free plan sleeps after 15 idle minutes and Supabase pauses a free project after a week. Set the `API_HEALTH_URL` repository variable to turn on `.github/workflows/keep-awake.yml`, and open the site a couple of minutes before a demo.
 
 ---
 
@@ -186,12 +190,14 @@ Secrets live only in these dashboards, never in git. The browser talks only to V
 sealedpaper/
 ├── docker-compose.yml            local PostgreSQL (+ test database)
 ├── render.yaml                   Render blueprint for the API
+├── .github/workflows/            CI (tests + database checks) and keep-awake ping
 ├── docs/
 │   ├── DEMO.md                   viva demo, step by step
+│   ├── DEPLOY.md                 Supabase + Render + Vercel, step by step
 │   ├── sample-questions/         JSON files for setters to import
 │   └── screenshots/
 ├── server/                       Express API + worker
-│   ├── migrations/               001 tables · 002 triggers · 003 functions/views · 004 DCL · 005 exam papers · 006 confidential documents
+│   ├── migrations/               001 tables · 002 triggers · 003 functions/views · 004 DCL · 005 exam papers · 006 confidential documents · 007 hosted-database hardening
 │   ├── sql/viva_checks.sql       33 database rule checks
 │   ├── assets/fonts/             DejaVu Sans for the PDFs
 │   ├── src/routes/               auth, users, documents, papers, centres, leaks, audit

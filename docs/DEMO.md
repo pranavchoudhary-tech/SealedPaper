@@ -46,7 +46,7 @@ You can scan your own face for every account; each account stores its own face t
 | 16 | Paste just the questions of a copy without the footer lines. | Names the **centre** from the question and option order. |
 | 17 | `npm run viva:sql` | 29 PASS rows: every rule above enforced by the database itself. |
 | 18 | **Audit log → Verify the hash chain**. Then as superuser: `ALTER TABLE audit_log DISABLE TRIGGER audit_no_edit; UPDATE audit_log SET payload = '{}' WHERE id = 5; ALTER TABLE audit_log ENABLE TRIGGER audit_no_edit;` and verify again. | The tampered row is flagged by number. |
-| 19 | Finish on the live URL. | Deployed on Vercel + Render + Neon. |
+| 19 | Finish on the live URL. | Deployed on Vercel + Render + Supabase. |
 
 ## Beyond exams: a confidential document (about 4 minutes)
 

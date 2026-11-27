@@ -1,0 +1,55 @@
+# Runs the API tests and the 33 database checks on every push, against a real PostgreSQL 16.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sealedpaper
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - run: npm ci
+      - name: Create the test database
+        run: PGPASSWORD=postgres psql -h localhost -U postgres -d sealedpaper -f sql/create-test-db.sql
+      - run: npm test
+      - name: Database rule checks
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/sealedpaper
+        run: npm run migrate && npm run viva:sql
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run build
+        env:
+          API_URL: http://localhost:4000
