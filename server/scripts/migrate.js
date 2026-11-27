@@ -12,8 +12,9 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-const client = new pg.Client(pgOptions());
+let client;
 try {
+  client = new pg.Client(pgOptions());
   await client.connect();
 } catch (err) {
   console.error(`Could not connect to the database: ${err.message}`);
