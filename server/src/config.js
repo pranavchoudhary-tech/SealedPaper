@@ -35,7 +35,7 @@ export const config = {
   isProduction,
   port: number('PORT', 4000),
   databaseUrl: required('DATABASE_URL'),
-  databaseSsl: process.env.DATABASE_SSL === 'true',
+  dbPoolMax: number('DB_POOL_MAX', 10),
   jwtSecret: required('JWT_SECRET'),
   masterKey: Buffer.from(masterKeyHex, 'hex'),
   cookieSecure: process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === 'true' : isProduction,

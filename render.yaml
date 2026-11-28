@@ -1,11 +1,13 @@
 # Render blueprint for the API + release worker (one web service).
-# In Render: New > Blueprint > pick this repo. Then fill the secret values in the dashboard.
+# In Render: New > Blueprint > pick this repo. Render then asks for the three secret values
+# marked "sync: false". Full walkthrough: docs/DEPLOY.md
 services:
   - type: web
     name: sealedpaper-api
     runtime: node
     rootDir: server
     plan: free
+    region: singapore          # closest Render region to India; pick the same region as Supabase
     buildCommand: npm ci && npm run migrate
     startCommand: npm start
     healthCheckPath: /api/health
@@ -15,14 +17,16 @@ services:
       - key: NODE_VERSION
         value: "22.12.0"
       - key: DATABASE_URL
-        sync: false          # paste your Neon / Supabase connection string
-      - key: DATABASE_SSL
-        value: "true"
+        sync: false            # Supabase > Connect > "Session pooler" string (port 5432), with your password filled in
       - key: MASTER_KEY
-        sync: false          # npm run keygen
+        sync: false            # from: cd server && npm run keygen
       - key: JWT_SECRET
-        sync: false          # npm run keygen
+        sync: false            # from: cd server && npm run keygen
+      - key: DB_POOL_MAX
+        value: "5"             # stays well under the Supabase free pooler's client limit
       - key: FACE_MODE
         value: real
       - key: TRUST_PROXY
-        value: "2"           # Vercel proxy -> Render proxy -> API
+        value: "2"             # Vercel proxy -> Render proxy -> API
+      - key: MALLOC_ARENA_MAX
+        value: "2"             # less memory fragmentation from image decoding on the 512 MB free plan

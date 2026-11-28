@@ -72,8 +72,20 @@ function decodeDataUrl(image) {
   return buf;
 }
 
+let sharpLib;
+async function loadSharp() {
+  if (!sharpLib) {
+    sharpLib = (await import('sharp')).default;
+    // Frames are decoded once and thrown away, so libvips' cache only costs memory.
+    // One thread keeps the API inside a 512 MB free-tier instance.
+    sharpLib.cache(false);
+    sharpLib.concurrency(1);
+  }
+  return sharpLib;
+}
+
 async function analyzeRealFrame(image) {
-  const sharp = (await import('sharp')).default;
+  const sharp = await loadSharp();
   const { data, info } = await sharp(decodeDataUrl(image))
     .rotate()
     .resize({ width: 480, withoutEnlargement: true })
